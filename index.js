@@ -5,6 +5,7 @@ const cors = require("cors");
 const app = express();
 const port = process.env.PORT || 8000;
 require("dotenv").config();
+const jwt = require("jsonwebtoken");
 
 // ** Middlewares
 app.use(cors());
@@ -36,6 +37,56 @@ const run = async () => {
 run();
 
 // ** DB COLLECTIONS
+
+const homeCollection = client.db("airbnb-clone").collection("homes");
+const userCollection = client.db("airbnb-clone").collection("users");
+
+// ** Creating users
+app.put("/users", async (req, res) => {
+  try {
+    const userData = req.body;
+    const email = userData.email;
+    const filter = {
+      email: email,
+    };
+    const updatedDoc = {
+      $set: userData,
+    };
+
+    const options = { upsert: true };
+
+    const user = await userCollection.updateOne(filter, updatedDoc, options);
+    return res.send({
+      success: true,
+      data: user,
+      message: "User created successfully",
+    });
+  } catch (error) {
+    res.send({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
+// ** generate jwt
+
+app.post("/jwt", async (req, res) => {
+  try {
+    const payload = req.body;
+    const token = jwt.sign(payload, process.env.ACCESS_SECRET_TOKEN);
+
+    return res.send({
+      success: true,
+      token,
+    });
+  } catch (error) {
+    res.send({
+      success: false,
+      message: error.message,
+    });
+  }
+});
 
 // ** APIS
 
